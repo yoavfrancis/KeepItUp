@@ -26,6 +26,7 @@
     <Compile Include="harddrive_enumerator.py" />
     <Compile Include="keepitup.py" />
     <Compile Include="repeatingtimer.py" />
+    <Compile Include="__init__.py" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
 </Project>

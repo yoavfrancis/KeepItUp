@@ -5,8 +5,9 @@ import logging
 import logging.handlers
 from harddrive import HardDrive
 
-INTERVAL_SECS = 90.0
-MAX_LOG_FILESIZE = 5*1024*1024 #5MB
+INTERVAL_SECS = 3 * 60 #make busy every 3 minutes
+REPOLL_INTERVAL_SECS = 60 * 60 #repoll hourly
+MAX_LOG_FILESIZE = 5*1024*1024 # 5MB maximal size for the log file.
 LOG_FILENAME = "keepitup.log"
 
 logger = logging.getLogger("keepitup")
@@ -24,11 +25,14 @@ def main():
     logger.info("KeepItUp started")
 
     # Hard drives are only enumerated on the first run of the program.
-    harddrives = []
-    for name, volName in harddrive_enumerator():
-        harddrives.append(HardDrive(name))
+    harddrivesList = []
+    pollHarddrives()
 
-    timer = RepeatingTimer(INTERVAL_SECS, wakeup, [harddrives])
+    pollingTimer = RepeatingTimer(REPOLL_INTERVAL_SECS, pollHarddrives)
+    pollingTimer.daemon = True # No need to wait for this thread.
+    pollingTimer.start()
+    
+    timer = RepeatingTimer(INTERVAL_SECS, wakeup)
     timer.trigger()
     timer.start()
     while timer.isAlive():
@@ -41,7 +45,22 @@ def main():
 
     logger.info("KeepItUp stopped")
 
-def wakeup(harddrivesList):
+# Polls all non-fixed hard drives to the global harddrivesList variable
+def pollHarddrives():
+    global harddrivesList
+    logger.debug("Polling fixed hard drives list..")
+    harddrivesList = []
+    try:
+        for name, volName in harddrive_enumerator():
+            harddrivesList.append(HardDrive(name))
+    except:
+        logger.exception("Failed to enumerate hard drives. Current list is: %s", str(harddrivesList))
+
+
+# Passes on all non-fixed harddrives in the harddrivesList variable and "makes them busy"
+def wakeup():
+    # Lists are thread-safe
+    global harddrivesList
     for hdd in harddrivesList:
         try:
             hdd.make_busy()
