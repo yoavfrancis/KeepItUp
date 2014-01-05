@@ -13,7 +13,6 @@ LOG_FILENAME = "keepitup.log"
 logger = logging.getLogger("keepitup")
 
 def main():
-
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
     handler = logging.handlers.RotatingFileHandler(LOG_FILENAME, maxBytes=MAX_LOG_FILESIZE)
